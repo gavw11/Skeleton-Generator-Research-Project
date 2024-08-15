@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, send_from_directory, send_file
 import tempfile
-from skeleton_generation.multiple_overlay import skeletonize
+from skeleton_generation.skel import skeletonize
 import os
 import uuid
 
