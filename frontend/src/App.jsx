@@ -1,12 +1,12 @@
 import React from 'react'
-import FileSubmit from './File Upload/FileUpload'
 import './App.css'
+import SkelGen from './Skel Upload and Download/SkelGen'
 
 function App() {
 
   return (
     <>
-      <FileSubmit/>
+        <SkelGen/>
     </>
   )
 }
