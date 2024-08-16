@@ -1,18 +1,20 @@
 from flask import Flask, request, jsonify, send_from_directory, send_file
+from flask_cors import CORS
 import tempfile
 from skeleton_generation.skel import skeletonize
 import os
 import uuid
 
 app = Flask(__name__)
+CORS(app)
 
 file_dict = {}
 
 # Determine the base directory
 base_dir = os.path.dirname(os.path.abspath(__file__))
-
 # Set the result folder relative to the base directory
 app.config['RESULT_FOLDER'] = os.path.join(base_dir, 'output_path')
+
 
 @app.route('/upload', methods=["POST"])
 def upload():
@@ -39,7 +41,8 @@ def upload():
         os.remove(input_path)
     
         return jsonify({"msg": "Video Uploaded Succesfully!", "id": file_unique_id}), 200
-    
+
+
 @app.route('/download/<unique_id>', methods=["GET"])
 def download(unique_id):
 
