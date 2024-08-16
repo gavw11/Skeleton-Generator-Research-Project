@@ -1,11 +1,12 @@
 import React from 'react'
-import './App.css'
-import SkelGen from './Skel Upload and Download/SkelGen'
+import SkelGen from './components/SkelGen'
+import NavBar from './components/NavBar'
 
 function App() {
 
   return (
     <>
+        <NavBar/>
         <SkelGen/>
     </>
   )
