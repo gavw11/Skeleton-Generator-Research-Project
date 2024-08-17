@@ -3,6 +3,8 @@ from ultralytics import YOLO
 import numpy as np
 import time
 from multiprocessing import Process, Queue
+from pathlib import Path
+import subprocess
 
 from skeleton_generation.utils.skeleton.extractKimiaEDF import generate_skeleton
 from skeleton_generation.utils.processing_utils.create_overlay import overlay_images
@@ -75,7 +77,7 @@ def worker(frame_queue, result_queue, model_path):
         result_queue.put(results)
 
 def video_writer(output_path, result_queue, frame_count, width, height, fps):
-    video_writer = cv.VideoWriter(output_path, cv.VideoWriter_fourcc(*"XVID"), fps, (width, height))
+    video_writer = cv.VideoWriter(output_path, cv.VideoWriter_fourcc(*"avc1"), fps, (width, height))
 
     frames = [None] * frame_count
     finished_frames = 0
@@ -133,6 +135,7 @@ def skeletonize(input_path, output_path, file_name):
         w.join()
     result_queue.put(None)  # Send sentinel value to video_writer
     writer_process.join()
+
 
     print(f"Finished in {time.monotonic() - start_time} seconds")
     cv.destroyAllWindows()

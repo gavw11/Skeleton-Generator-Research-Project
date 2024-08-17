@@ -27,8 +27,8 @@ def upload():
         if not file:
             return jsonify({"msg": "File Not Accessible!"}), 400
 
-        file_name, file_ext = os.path.splitext(file.filename)
-        skeleton_fil_name = f"{file_name}-skeleton{file_ext}"
+        file_name, _ = os.path.splitext(file.filename)
+        skeleton_fil_name = f"{file_name}-skeleton.mp4"
 
         with tempfile.NamedTemporaryFile(delete=False) as input_file:
             input_path = input_file.name

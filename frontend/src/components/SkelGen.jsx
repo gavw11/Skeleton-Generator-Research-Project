@@ -36,15 +36,17 @@ const SkelGen = () => {
     }
 
     return (
-        <idContext.Provider value={fileID}>
+        <div className="px-28 mr-24">
+            <idContext.Provider value={fileID}>
             <div className='FileSubmit'>
                 <form onSubmit={handleSubmit}>
-                    <input type='file' onChange={handleFileChange}/>
+                    <input type='file' className='rounded-lg' onChange={handleFileChange}/>
                     <button type='submit'>Generate Skeleton</button>
                 </form>
             </div>
             <Download/>
-        </idContext.Provider>
+        </idContext.Provider>          
+        </div>
     )
 };
 
