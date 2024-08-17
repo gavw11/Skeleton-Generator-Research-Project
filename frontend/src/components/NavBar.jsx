@@ -10,7 +10,9 @@ const NavBar = () => {
                 WebkitTextFillColor: 'transparent',
                 display: 'inline-block',
                }}>AI</span></h1>
-              <a href="#" className="px-10 py-3">About Project</a>
+              <div className="">
+                <a href="#" className="px-10 py-3">About Project</a>
+              </div>
             </div>
           </nav>
         </>
