@@ -36,16 +36,16 @@ const SkelGen = () => {
     }
 
     return (
-        <div className="px-28 mr-24">
+        <div className="flex justify-center px-10 pt-20">
             <idContext.Provider value={fileID}>
-            <div className='FileSubmit'>
-                <form onSubmit={handleSubmit}>
-                    <input type='file' className='rounded-lg' onChange={handleFileChange}/>
-                    <button type='submit'>Generate Skeleton</button>
-                </form>
-            </div>
-            <Download/>
-        </idContext.Provider>          
+                <div className='FileSubmit'>
+                    <form onSubmit={handleSubmit}>
+                        <input type='file' className='rounded-lg' onChange={handleFileChange}/>
+                        <button type='submit'>Generate Skeleton</button>
+                    </form>
+                </div>
+                <Download/>
+            </idContext.Provider>          
         </div>
     )
 };

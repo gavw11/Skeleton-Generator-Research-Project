@@ -4,11 +4,17 @@ import numpy as np
 import time
 from multiprocessing import Process, Queue
 from pathlib import Path
-import subprocess
 
 from skeleton_generation.utils.skeleton.extractKimiaEDF import generate_skeleton
 from skeleton_generation.utils.processing_utils.create_overlay import overlay_images
 from skeleton_generation.utils.processing_utils.process_images import process_image
+
+
+# Get the directory where this script is located
+current_directory = Path(__file__).parent
+
+# Define the relative path to the model file
+model_path = current_directory / 'utils' / 'models' / 'yolov8n-seg.onnx'
 
 def frame_reader(input_path, frame_queue, num_workers):
 
@@ -100,7 +106,7 @@ def video_writer(output_path, result_queue, frame_count, width, height, fps):
 
 def skeletonize(input_path, output_path, file_name):
 
-    model_path = r"backend\skeleton_generation\utils\models\yolov8n-seg.onnx"
+    model = model_path
 
     video = cv.VideoCapture(input_path)
     assert video.isOpened(), "Error: Cannot Open Video!"
@@ -122,7 +128,7 @@ def skeletonize(input_path, output_path, file_name):
 
     workers = []
     for _ in range(num_workers):
-        worker_process = Process(target=worker, args=(frame_queue, result_queue, model_path))
+        worker_process = Process(target=worker, args=(frame_queue, result_queue, model))
         workers.append(worker_process)
         worker_process.start()
 
