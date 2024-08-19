@@ -42,6 +42,18 @@ def upload():
     
         return jsonify({"msg": "Video Uploaded Succesfully!", "id": file_unique_id}), 200
 
+@app.route('/view/<unique_id>', methods=['GET'])
+def view(unique_id):
+    if unique_id in file_dict:
+        file_name = file_dict[unique_id]["skeleton"]
+        file_path = os.path.join(app.config['RESULT_FOLDER'], file_name)
+
+        if os.path.exists(file_path):
+            return send_from_directory(app.config['RESULT_FOLDER'], file_name, mimetype='video/mp4')
+        else:
+            return jsonify({"msg": "Video Not Found!"}), 404
+    else:
+        return jsonify({"msg": "ID Not Found!"}), 404
 
 @app.route('/download/<unique_id>', methods=["GET"])
 def download(unique_id):
