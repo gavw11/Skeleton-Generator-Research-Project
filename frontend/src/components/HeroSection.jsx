@@ -1,6 +1,6 @@
 import SkelGen from "./SkelGen"
-import demoVid from '../assets/demo_vid-skeleton.mp4'
 import VideoBackground from "./VideoBackground"
+import Generate from "./Generate"
 
 const HeroSection = () => {
   return (
@@ -20,7 +20,7 @@ const HeroSection = () => {
               Powered by YOLOv8, OpenCV, & Python
             </p>
         </div>
-        <SkelGen/>
+        <Generate/>
       </div>
     </>
     )
