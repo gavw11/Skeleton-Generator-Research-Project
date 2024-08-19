@@ -30,7 +30,7 @@ const Generate = () => {
 
             setGenerating(true);
 
-            const url = 'http://127.0.0.1:5000/upload';
+            const url = 'http://127.0.0.1:5000/api/upload';
             const formData = new FormData();
             formData.append('file', file);
             formData.append('fileName', file.name);
@@ -45,10 +45,10 @@ const Generate = () => {
                 const response = await axios.post(url, formData, config);
             
                 console.log(response.data.msg);
-                setFileURL(`http://127.0.0.1:5000/download/${response.data.id}`);
+                setFileURL(`http://127.0.0.1:5000/api/download/${response.data.id}`);
                 setDownloadReady(true);
                 
-                const viewUrl = `http://127.0.0.1:5000/view/${response.data.id}`;
+                const viewUrl = `http://127.0.0.1:5000/api/view/${response.data.id}`;
                 setVideoURL(viewUrl);
 
             }

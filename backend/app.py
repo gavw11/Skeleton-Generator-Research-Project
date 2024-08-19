@@ -8,6 +8,19 @@ import uuid
 app = Flask(__name__)
 CORS(app)
 
+frontend_folder = os.path.join(os.getcwd(), "..", "frontend")
+dist_folder = os.path.join(frontend_folder, "dist")
+
+
+@app.route('/', defaults={"filename":""})
+@app.route('/<path:filename>')
+def index(filename):
+    if not filename:
+        filename = "index.html"
+    return send_from_directory(dist_folder, filename)
+
+#API Routes
+
 file_dict = {}
 
 # Determine the base directory
@@ -15,8 +28,7 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 # Set the result folder relative to the base directory
 app.config['RESULT_FOLDER'] = os.path.join(base_dir, 'output_path')
 
-
-@app.route('/upload', methods=["POST"])
+@app.route('/api/upload', methods=["POST"])
 def upload():
     if request.method == 'POST':
 
@@ -42,7 +54,7 @@ def upload():
     
         return jsonify({"msg": "Video Uploaded Succesfully!", "id": file_unique_id}), 200
 
-@app.route('/view/<unique_id>', methods=['GET'])
+@app.route('/api/view/<unique_id>', methods=['GET'])
 def view(unique_id):
     if unique_id in file_dict:
         file_name = file_dict[unique_id]["skeleton"]
@@ -55,7 +67,7 @@ def view(unique_id):
     else:
         return jsonify({"msg": "ID Not Found!"}), 404
 
-@app.route('/download/<unique_id>', methods=["GET"])
+@app.route('/api/download/<unique_id>', methods=["GET"])
 def download(unique_id):
 
     print(f"Received unique_id: {unique_id}")
