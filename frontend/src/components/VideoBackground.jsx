@@ -2,9 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import video1 from "../assets/demo_vid-skeleton.mp4";
 import video2 from "../assets/demo_vid2-skeleton.mp4";
 import video3 from "../assets/demo_vid3-skeleton.mp4";
+import video4 from "../assets/demo_vid4-skeleton.mp4";
+
 
 const VideoBackground = () => {
-    const videos = [video1, video2, video3];
+    const videos = [video1, video2, video3, video4];
     const [currentVidIndex, setCurrentVidIndex] = useState(0);
     const videoRef = useRef(null);
 
