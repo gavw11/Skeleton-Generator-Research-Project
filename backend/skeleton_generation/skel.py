@@ -3,7 +3,8 @@ from ultralytics import YOLO
 import numpy as np
 import time
 from multiprocessing import Process, Queue
-from pathlib import Path
+import os
+
 
 from skeleton_generation.utils.skeleton.extractKimiaEDF import generate_skeleton
 from skeleton_generation.utils.processing_utils.create_overlay import overlay_images
@@ -11,10 +12,10 @@ from skeleton_generation.utils.processing_utils.process_images import process_im
 
 
 # Get the directory where this script is located
-current_directory = Path(__file__).parent
+current_directory = os.getcwd()
 
 # Define the relative path to the model file
-model_path = current_directory / 'utils' / 'models' / 'yolov8n-seg.onnx'
+model_path = os.path.join(current_directory,"skeleton_generation", "utils", "models", "yolov8n-seg.onnx")
 
 def frame_reader(input_path, frame_queue, num_workers):
 

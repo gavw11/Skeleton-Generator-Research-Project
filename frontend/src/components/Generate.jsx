@@ -10,10 +10,12 @@ const Generate = () => {
     const [file, setFile] = useState(null);
     const [fileURL, setFileURL] = useState('#');
     const [generating, setGenerating] = useState(false);
+    const [generateDisabled, setGenerateDisabled] = useState(false);
 
     const inputFileRef = useRef(null);
 
     const handleFileChange = (event) => {
+        setGenerateDisabled(false);
         setFile(event.target.files[0])
 
         if (event.target.files[0])
@@ -28,6 +30,7 @@ const Generate = () => {
     const handleGenerate = async () => {
         if (file) {
 
+            setGenerateDisabled(true);
             setGenerating(true);
 
             const url = 'http://127.0.0.1:5000/api/upload';
@@ -81,7 +84,7 @@ const Generate = () => {
                                                         rounded-2xl text-xs shadow-md transition-all duration-500 
                                                         font-light md:text-2xl md:mx-12 md:px-6'>Upload File</button>
                 {uploadFinished && (
-                    <button onClick={handleGenerate} className='px-1 h-12 mx-5 bg-green-500 hover:bg-green-700
+                    <button onClick={handleGenerate} disabled={generateDisabled} className='px-1 h-12 mx-5 bg-green-500 hover:bg-green-700
                                                             rounded-2xl text-xs font-light transition-all duration-500
                                                             md:text-2xl md:mx-12 md:px-6'
                                                             >Generate Skeleton</button>
