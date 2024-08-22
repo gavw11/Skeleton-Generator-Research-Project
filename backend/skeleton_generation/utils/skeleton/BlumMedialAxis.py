@@ -5,11 +5,20 @@ from skeleton_generation.utils.skeleton.branchesforbma import calculate_branches
 from skeleton_generation.utils.skeleton.calculate_medial_axis import calculate_medial_axis
 from skeleton_generation.utils.skeleton.calculate_medial_order import calculate_medial_order
 from skeleton_generation.utils.skeleton.calculateWEDF import calculate_wedf  # ZG
+from scipy.ndimage import gaussian_filter1d
 
+def gaussian_smoothing(boundary, sigma):
+    return gaussian_filter1d(boundary, sigma=sigma)
+
+def downsample(boundary, factor):
+    return boundary[::factor]
 
 class BlumMedialAxis:
-    def __init__(self, boundary):
-        if boundary is not None:
+    def __init__(self, init_boundary):
+        if init_boundary is not None:
+            smoothed_boundary = gaussian_smoothing(init_boundary, sigma=2)
+            downsampled_boundary = downsample(smoothed_boundary, factor=5)
+            boundary = downsampled_boundary
             self.boundary, self.medial_data = calculate_medial_axis(boundary)
             self.pointsArray = []  # Initialize pointsArray
             self.radiiArray = []  # Initialize radiiArray
@@ -25,8 +34,8 @@ class BlumMedialAxis:
             self.calculate_ET_and_ST()
 
     def prune(self, et_ratio, st_threshold):
-        # ZG
-        # area of a polygon = 1/2 * abs(Σ[x[i]*y[i+1] - x[i+1]*y[i]])
+        print("EDFArray:", self.EDFArray)   
+        print("ShapeTubularity:", self.shapeTubularity)
         x_coords = np.real(self.boundary)
         y_coords = np.imag(self.boundary)
 
@@ -35,15 +44,19 @@ class BlumMedialAxis:
             - np.dot(y_coords, np.roll(x_coords, 1))
         )
 
-        et_threshold = et_ratio * np.sqrt(area)  # ZG - changed sqrt to np.sqrt
+        et_threshold = et_ratio * np.sqrt(area)
+        print("ET Threshold:", et_threshold)
 
         indices_to_remove = [
             i
             for i, val in enumerate(self.EDFArray)
-            if val < et_threshold or val < st_threshold
+            if val < et_threshold or self.shapeTubularity[i] < st_threshold
         ]
-
+        
+        print("Indices to remove:", indices_to_remove)
         self.remove_at_index(indices_to_remove)
+        print("Points after pruning:", self.pointsArray)
+
 
     def calculate_ET_and_ST(self):
         self.erosionThickness = [
@@ -157,7 +170,7 @@ class BlumMedialAxis:
         )
 
         # Plot self.pointsArray, separating real and imaginary parts
-        plt.plot(np.real(self.pointsArray), np.imag(self.pointsArray), "r*")
+        plt.plot(np.real(self.pointsArray), np.imag(self.pointsArray), "r*", alpha=0)
 
         for i in range(len(self.pointsArray)):
             # Extract the real and imaginary parts for point i
