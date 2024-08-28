@@ -14,10 +14,10 @@ def downsample(boundary, factor):
     return boundary[::factor]
 
 class BlumMedialAxis:
-    def __init__(self, init_boundary):
+    def __init__(self, init_boundary, smooth_sigma, down_factor):
         if init_boundary is not None:
-            smoothed_boundary = gaussian_smoothing(init_boundary, sigma=2)
-            downsampled_boundary = downsample(smoothed_boundary, factor=5)
+            smoothed_boundary = gaussian_smoothing(init_boundary, sigma=smooth_sigma)
+            downsampled_boundary = downsample(smoothed_boundary, factor=down_factor)
             boundary = downsampled_boundary
             self.boundary, self.medial_data = calculate_medial_axis(boundary)
             self.pointsArray = []  # Initialize pointsArray

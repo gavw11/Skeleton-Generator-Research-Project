@@ -11,13 +11,13 @@ import matplotlib.pyplot as plt
 from skeleton_generation.utils.skeleton.BlumMedialAxis import BlumMedialAxis
 
 
-def generate_skeleton(contour_strings, target_width, target_height):
+def generate_skeleton(contour_strings, target_width, target_height, smooth_sigma, down_factor):
 
     # Convert contour_strings into numpy array
     rough = np.array([list(map(float, s.split())) for s in contour_strings])
 
     boundary = rough[:, 0] + 1j * rough[:, 1]
-    bma = BlumMedialAxis(boundary)
+    bma = BlumMedialAxis(boundary, smooth_sigma, down_factor)
 
     fig = bma.plot_with_edges()
 

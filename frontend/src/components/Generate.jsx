@@ -6,14 +6,32 @@ const Generate = () => {
 
     const [downloadReady, setDownloadReady] = useState(false);
     const [uploadFinished, setUploadFinished] = useState(false);
-    const [videoURL, setVideoURL] = useState(null);
+    const [viewURL, setViewURL] = useState(null);
     const [file, setFile] = useState(null);
     const [fileURL, setFileURL] = useState('#');
     const [generating, setGenerating] = useState(false);
     const [generateDisabled, setGenerateDisabled] = useState(false);
+    const [isImage, setIsImage] = useState(null);
+    const [isVideo, setIsVideo] = useState(null);
+    const [generationSettings, setGenerationSettings] = useState({
+        confidence_level: 0.5,
+        smoothing_factor: 7,
+        downsample: 1
+    })
 
     const inputFileRef = useRef(null);
     const videoRef = useRef(null);
+
+    const handleSettingsChange = (event) => {
+        const { name, value } = event.target;
+
+        setGenerateDisabled(false);
+
+        setGenerationSettings(prevSettings => ({
+            ...prevSettings,
+            [name]: parseFloat(value)
+        }));
+    };
 
     useEffect(() => {
         const currentVid = videoRef.current;
@@ -22,15 +40,30 @@ const Generate = () => {
             // Explicitly reload the video to ensure new source is applied
             currentVid.load();
         }
-    }, [videoURL]); // Reload video source changes
+    }, [viewURL]); // Reload video source changes
 
 
     const handleFileChange = (event) => {
-        setGenerateDisabled(false);
-        setFile(event.target.files[0])
+        const file = event.target.files[0];
 
-        if (event.target.files[0])
+        if (file) {
+            const type = file.type;
+
+            if (type.startsWith('image/')) {
+                setIsImage(true);
+                setIsVideo(false);
+            }
+            else if (type.startsWith('video/')) {
+                setIsVideo(true);
+                setIsImage(false);
+            }
+            
+            setGenerateDisabled(false);
+            setFile(file);
+
             setUploadFinished(true);
+
+        }
     }
 
     const handleInput = () => {
@@ -48,6 +81,7 @@ const Generate = () => {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('fileName', file.name);
+            formData.append('generationSettings', JSON.stringify(generationSettings));
             const config = {
             headers: {
                 'content-type': 'multipart/form-data',
@@ -63,7 +97,7 @@ const Generate = () => {
                 setDownloadReady(true);
                 
                 const viewUrl = `http://127.0.0.1:5000/api/view/${response.data.id}`;
-                setVideoURL(viewUrl);
+                setViewURL(viewUrl);
 
             }
             catch(error) {
@@ -102,16 +136,43 @@ const Generate = () => {
                 )}
             </div>
         </div>
-        {downloadReady && (
+        {uploadFinished && (
+            <div className='flex flex-col justify-center items-center w-full pt-10'>
+                <label class>
+                    Confidence Level:
+                    <input className='mx-4' type='range' name='confidence_level' min='0.1' max='1' step='0.05' value={generationSettings.confidence_level} onChange={handleSettingsChange}/>
+                    {generationSettings.confidence_level} 
+                </label>
+                <label>
+                    Smoothing Factor:
+                    <input className='mx-4' type='range' name='smoothing_factor' min='1' max='30' step='1' value={generationSettings.smoothing_factor} onChange={handleSettingsChange}/>
+                    {generationSettings.smoothing_factor}
+                </label>
+                <label>
+                    Downsample Factor:
+                    <input className='mx-4' type='range' name='downsample' min='1' max='8' step='1' value={generationSettings.downsample} onChange={handleSettingsChange}/>
+                    {generationSettings.downsample}
+                </label>  
+            </div>
+        )}
+        {downloadReady && isVideo && (
             <div className='flex flex-col justify-center items-center w-full h-full pt-10'>
                 <a href={fileURL} className='inline-flex items-center justify-center px-3 h-12 mx-12 bg-black border border-white
                                              hover:bg-white hover:text-black rounded-2xl text-2xl shadow-md transition-all 
                                              duration-700 font-light'>Download Skeleton</a>
                 <video autoPlay loop ref={videoRef} className='mt-10 w-1/2 h-auto rounded-md border-4 border-green-400 object-cover'>
-                    <source src={videoURL} type='video/mp4'/>
+                    <source src={viewURL} type='video/mp4'/>
                 </video>                
             </div>
             )}
+        {downloadReady && isImage && (
+            <div className='flex flex-col justify-center items-center w-full h-full pt-10'>
+            <a href={fileURL} className='inline-flex items-center justify-center px-3 h-12 mx-12 bg-black border border-white
+                                            hover:bg-white hover:text-black rounded-2xl text-2xl shadow-md transition-all 
+                                            duration-700 font-light'>Download Skeleton</a>
+            <img src={viewURL} className='mt-10 w-1/2 h-auto rounded-md border-4 border-green-400 object-cover'/>
+        </div>
+        )}
     </>
   )
 }

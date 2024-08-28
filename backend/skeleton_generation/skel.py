@@ -37,9 +37,9 @@ def frame_reader(input_path, frame_queue, num_workers):
 
     
 
-def process_frame(frame_index, frame, model):
+def process_frame(frame_index, frame, model, generation_settings):
     
-    results = model.predict(frame, conf=0.45, save=False, show=False, verbose=False)
+    results = model.predict(frame, conf=generation_settings['confidence_level'], save=False, show=False, verbose=False)
 
     background = frame
     frame_results = []
@@ -57,7 +57,7 @@ def process_frame(frame_index, frame, model):
                 mask3ch = cv.cvtColor(b_mask, cv.COLOR_GRAY2BGR)
                 isolated = cv.bitwise_and(mask3ch, img)
                 processed_img = process_image(isolated)
-                skel = generate_skeleton(processed_img["contour_strings"], frame.shape[1], frame.shape[0])
+                skel = generate_skeleton(processed_img["contour_strings"], frame.shape[1], frame.shape[0], generation_settings['smoothing_factor'], generation_settings['downsample'])
                 overlayed = overlay_images(background, skel)
 
                 if overlayed.shape[2] == 4:
@@ -72,7 +72,7 @@ def process_frame(frame_index, frame, model):
 
     return (frame_index, frame_results)
 
-def worker(frame_queue, result_queue, model_path):
+def worker(frame_queue, result_queue, model_path, generation_settings):
     model = YOLO(model_path)  # Load the model within each worker
     while True:
         frame_data = frame_queue.get()
@@ -80,7 +80,7 @@ def worker(frame_queue, result_queue, model_path):
             result_queue.put(None)
             break
         frame_index, frame = frame_data
-        results = process_frame(frame_index, frame, model)
+        results = process_frame(frame_index, frame, model, generation_settings)
         result_queue.put(results)
 
 def video_writer(output_path, result_queue, frame_count, width, height, fps):
@@ -105,7 +105,7 @@ def video_writer(output_path, result_queue, frame_count, width, height, fps):
 
     video_writer.release()
 
-def skeletonize_video(input_path, output_path, file_name):
+def skeletonize_video(input_path, output_path, file_name, generation_settings):
 
     model = model_path
 
@@ -129,7 +129,7 @@ def skeletonize_video(input_path, output_path, file_name):
 
     workers = []
     for _ in range(num_workers):
-        worker_process = Process(target=worker, args=(frame_queue, result_queue, model))
+        worker_process = Process(target=worker, args=(frame_queue, result_queue, model, generation_settings))
         workers.append(worker_process)
         worker_process.start()
 
@@ -147,13 +147,13 @@ def skeletonize_video(input_path, output_path, file_name):
     print(f"Finished in {time.monotonic() - start_time} seconds")
     cv.destroyAllWindows()
 
-def skeletonize_img(input_path, output_path, file_name):
+def skeletonize_img(input_path, output_path, file_name, generation_settings):
 
     original_img = cv.imread(input_path)
 
     model = YOLO(model_path)
 
-    results = model.predict(original_img, conf=0.45, save=False, show=False, verbose=False)
+    results = model.predict(original_img, conf=generation_settings['confidence_level'], save=False, show=False, verbose=False)
 
     background = original_img
 
@@ -170,7 +170,7 @@ def skeletonize_img(input_path, output_path, file_name):
                 mask3ch = cv.cvtColor(b_mask, cv.COLOR_GRAY2BGR)
                 isolated = cv.bitwise_and(mask3ch, img)
                 processed_img = process_image(isolated)
-                skel = generate_skeleton(processed_img["contour_strings"], original_img.shape[1], original_img.shape[0])
+                skel = generate_skeleton(processed_img["contour_strings"], original_img.shape[1], original_img.shape[0], generation_settings['smoothing_factor'], generation_settings['downsample'])
                 overlayed = overlay_images(background, skel)
 
                 if overlayed.shape[2] == 4:

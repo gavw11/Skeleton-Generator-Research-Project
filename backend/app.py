@@ -4,6 +4,7 @@ import tempfile
 from skeleton_generation.skel import skeletonize_video, skeletonize_img
 import os
 import uuid
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -33,6 +34,11 @@ def upload():
 
         file = request.files['file']
 
+        generation_settings = request.form.get('generationSettings')
+        if generation_settings:
+            generation_settings = json.loads(generation_settings)
+            print(generation_settings)
+
         file_unique_id = str(uuid.uuid4())
 
         if not file:
@@ -52,10 +58,10 @@ def upload():
 
         if ext.lower() in image_extensions:
             skeleton_fil_name = f"{file_name}-skeleton.png"
-            skeletonize_img(input_path, app.config['RESULT_FOLDER'], skeleton_fil_name)
+            skeletonize_img(input_path, app.config['RESULT_FOLDER'], skeleton_fil_name, generation_settings)
         elif ext.lower() in video_extensions:
             skeleton_fil_name = f"{file_name}-skeleton.mp4"
-            skeletonize_video(input_path, app.config['RESULT_FOLDER'], skeleton_fil_name)
+            skeletonize_video(input_path, app.config['RESULT_FOLDER'], skeleton_fil_name, generation_settings)
 
         file_dict[file_unique_id] = {"skeleton": skeleton_fil_name}
 
