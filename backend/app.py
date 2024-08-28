@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import tempfile
-from skeleton_generation.skel import skeletonize
+from skeleton_generation.skel import skeletonize_video, skeletonize_img
 import os
 import uuid
 
@@ -20,7 +20,6 @@ def index(filename):
     return send_from_directory(dist_folder, filename)
 
 #API Routes
-
 file_dict = {}
 
 # Determine the base directory
@@ -38,15 +37,25 @@ def upload():
 
         if not file:
             return jsonify({"msg": "File Not Accessible!"}), 400
-
-        file_name, _ = os.path.splitext(file.filename)
-        skeleton_fil_name = f"{file_name}-skeleton.mp4"
+        
 
         with tempfile.NamedTemporaryFile(delete=False) as input_file:
             input_path = input_file.name
             file.save(input_path)
         
-        skeletonize(input_path, app.config['RESULT_FOLDER'], skeleton_fil_name)
+        
+        file_name, ext = os.path.splitext(file.filename)
+
+        # Define image and video extensions
+        image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff', '.webp']
+        video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv', '.webm']
+
+        if ext.lower() in image_extensions:
+            skeleton_fil_name = f"{file_name}-skeleton.png"
+            skeletonize_img(input_path, app.config['RESULT_FOLDER'], skeleton_fil_name)
+        elif ext.lower() in video_extensions:
+            skeleton_fil_name = f"{file_name}-skeleton.mp4"
+            skeletonize_video(input_path, app.config['RESULT_FOLDER'], skeleton_fil_name)
 
         file_dict[file_unique_id] = {"skeleton": skeleton_fil_name}
 

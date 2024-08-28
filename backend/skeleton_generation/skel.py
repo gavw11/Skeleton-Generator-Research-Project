@@ -105,7 +105,7 @@ def video_writer(output_path, result_queue, frame_count, width, height, fps):
 
     video_writer.release()
 
-def skeletonize(input_path, output_path, file_name):
+def skeletonize_video(input_path, output_path, file_name):
 
     model = model_path
 
@@ -146,3 +146,39 @@ def skeletonize(input_path, output_path, file_name):
 
     print(f"Finished in {time.monotonic() - start_time} seconds")
     cv.destroyAllWindows()
+
+def skeletonize_img(input_path, output_path, file_name):
+
+    original_img = cv.imread(input_path)
+
+    model = YOLO(model_path)
+
+    results = model.predict(original_img, conf=0.45, save=False, show=False, verbose=False)
+
+    background = original_img
+
+    for result in results:
+        if result is not None:
+            img = np.copy(result.orig_img)
+
+            for ci, c in enumerate(result):
+                b_mask = np.zeros(img.shape[:2], np.uint8)
+                contour = c.masks.xy.pop()
+                contour = contour.astype(np.int32)
+                contour = contour.reshape(-1, 1, 2)
+                _ = cv.drawContours(b_mask, [contour], -1, (255, 255, 255), cv.FILLED)
+                mask3ch = cv.cvtColor(b_mask, cv.COLOR_GRAY2BGR)
+                isolated = cv.bitwise_and(mask3ch, img)
+                processed_img = process_image(isolated)
+                skel = generate_skeleton(processed_img["contour_strings"], original_img.shape[1], original_img.shape[0])
+                overlayed = overlay_images(background, skel)
+
+                if overlayed.shape[2] == 4:
+                    overlayed = cv.cvtColor(overlayed, cv.COLOR_BGRA2BGR)
+
+                if ci != (len(results[0].boxes) - 1):
+                    background = overlayed
+                else:
+                    cv.imwrite((f"{output_path}\\{file_name}"), overlayed)
+        else:
+            cv.imwrite((f"{output_path}\\{file_name}"), overlayed)

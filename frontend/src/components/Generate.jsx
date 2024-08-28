@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import loadingSpinner from '../assets/loading_spinner.svg'
 import axios from 'axios'
 
@@ -13,6 +13,17 @@ const Generate = () => {
     const [generateDisabled, setGenerateDisabled] = useState(false);
 
     const inputFileRef = useRef(null);
+    const videoRef = useRef(null);
+
+    useEffect(() => {
+        const currentVid = videoRef.current;
+
+        if (currentVid) {
+            // Explicitly reload the video to ensure new source is applied
+            currentVid.load();
+        }
+    }, [videoURL]); // Reload video source changes
+
 
     const handleFileChange = (event) => {
         setGenerateDisabled(false);
@@ -96,7 +107,7 @@ const Generate = () => {
                 <a href={fileURL} className='inline-flex items-center justify-center px-3 h-12 mx-12 bg-black border border-white
                                              hover:bg-white hover:text-black rounded-2xl text-2xl shadow-md transition-all 
                                              duration-700 font-light'>Download Skeleton</a>
-                <video autoPlay loop className='mt-10 w-1/2 h-auto rounded-md border-4 border-green-400 object-cover'>
+                <video autoPlay loop ref={videoRef} className='mt-10 w-1/2 h-auto rounded-md border-4 border-green-400 object-cover'>
                     <source src={videoURL} type='video/mp4'/>
                 </video>                
             </div>
