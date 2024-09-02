@@ -6,9 +6,11 @@ from skeleton_generation.utils.skeleton.calculate_medial_axis import calculate_m
 from skeleton_generation.utils.skeleton.calculate_medial_order import calculate_medial_order
 from skeleton_generation.utils.skeleton.calculateWEDF import calculate_wedf  # ZG
 from scipy.ndimage import gaussian_filter1d
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
 
 def gaussian_smoothing(boundary, sigma):
-    return gaussian_filter1d(boundary, sigma=sigma)
+    return gaussian_filter1d(boundary.real, sigma=sigma) + 1j * gaussian_filter1d(boundary.imag, sigma=sigma)
 
 def downsample(boundary, factor):
     return boundary[::factor]
@@ -168,21 +170,36 @@ class BlumMedialAxis:
             color="darkblue",
             linewidth=4.0,
         )
+        
+                # Create a Polygon object from the boundary
+        boundary_polygon = Polygon([(np.real(pt), np.imag(pt)) for pt in closed_boundary])
+
+        # Filter points inside the boundary
+        inside_points = []
+        for point in self.pointsArray:
+            pt = Point(np.real(point), np.imag(point))
+            if boundary_polygon.contains(pt):
+                inside_points.append(point)
+
 
         # Plot self.pointsArray, separating real and imaginary parts
-        plt.plot(np.real(self.pointsArray), np.imag(self.pointsArray), "r*", alpha=0)
+        plt.plot(np.real(inside_points), np.imag(inside_points), 'o', color='lightgreen', markersize=4)  # Light green dots
 
-        for i in range(len(self.pointsArray)):
-            # Extract the real and imaginary parts for point i
-            x = np.real(self.pointsArray[i])
-            y = np.imag(self.pointsArray[i])
-            for j in range(i + 1, len(self.pointsArray)):
-                if self.adjacency_matrix[i][j]:
-                    # Extract the real and imaginary parts for point j
-                    x2 = np.real(self.pointsArray[j])
-                    y2 = np.imag(self.pointsArray[j])
-                    # Plot a line between point i and point j
-                    plt.plot([x, x2], [y, y2], color="lightgreen")
+
+        #with open('points.txt', 'w') as file:
+        #    for item in self.pointsArray:
+        #        file.write(f'{item.real} {item.imag}\n')
+           # Plot edges only for points inside the boundary
+        #for i in range(len(inside_points)):
+        #    x = np.real(inside_points[i])
+        #    y = np.imag(inside_points[i])
+        #   for j in range(i + 1, len(inside_points)):
+        #        if self.adjacency_matrix[i][j]:
+        #            x2 = np.real(inside_points[j])
+        #            y2 = np.imag(inside_points[j])
+        #            plt.plot([x, x2], [y, y2], color="lightgreen")
+        
+
 
         plt.axis("equal")
         return figure1

@@ -5,6 +5,7 @@ from skeleton_generation.skel import skeletonize_video, skeletonize_img
 import os
 import uuid
 import json
+from skeleton_generation.openai_creation import save_generation
 
 app = Flask(__name__)
 CORS(app)
@@ -67,7 +68,31 @@ def upload():
 
         os.remove(input_path)
     
-        return jsonify({"msg": "Video Uploaded Succesfully!", "id": file_unique_id}), 200
+        return jsonify({"msg": "Uploaded Succesfully!", "id": file_unique_id}), 200
+    
+
+@app.route('/api/openai/upload', methods=['POST'])
+def openai_upload():
+    if request.method == 'POST':
+
+        prompt = request.json.get('prompt')
+        generation_settings = request.json.get('generationSettings')
+
+        file_unique_id = str(uuid.uuid4())
+        
+            
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as input_file:
+                input_path = input_file.name
+                save_generation(prompt, input_path)
+        
+        file_name = file_unique_id
+        skeleton_fil_name = f"{file_name}-skeleton.png"
+        skeletonize_img(input_path, app.config['RESULT_FOLDER'], skeleton_fil_name, generation_settings)
+
+        file_dict[file_unique_id] = {"skeleton": skeleton_fil_name}
+        os.remove(input_path)
+        return jsonify({"msg": "Uploaded Succesfully!", "id": file_unique_id}), 200
+                
 
 @app.route('/api/view/<unique_id>', methods=['GET'])
 def view(unique_id):

@@ -25,6 +25,3 @@ def calculate_medial_order(medial_data):
 
     mord = np.vstack((m2[a1], m2[b1]))
     return mord
-
-
-print("#-1 runs")

@@ -17,6 +17,19 @@ current_directory = os.getcwd()
 # Define the relative path to the model file
 model_path = os.path.join(current_directory,"skeleton_generation", "utils", "models", "yolov8n-seg.onnx")
 
+def filter_most_confident(detections):
+    max_confidence = 0
+    best_detection = None
+    
+    for detection in detections:
+        if detection.boxes.conf.numel() > 0:
+            confidence = detection.boxes.conf[0]  # Replace with how confidence is accessed in your data structure
+            if confidence >= max_confidence:   
+                max_confidence = confidence
+                best_detection = detection
+        
+    return best_detection
+
 def frame_reader(input_path, frame_queue, num_workers):
 
     video = cv.VideoCapture(input_path)
@@ -44,6 +57,10 @@ def process_frame(frame_index, frame, model, generation_settings):
     background = frame
     frame_results = []
 
+    if results is None or len(results) == 0:
+        frame_results.append(frame)
+        print("NO RESULTS")
+
     for result in results:
         if result is not None:
             img = np.copy(result.orig_img)
@@ -55,7 +72,9 @@ def process_frame(frame_index, frame, model, generation_settings):
                 contour = contour.reshape(-1, 1, 2)
                 _ = cv.drawContours(b_mask, [contour], -1, (255, 255, 255), cv.FILLED)
                 mask3ch = cv.cvtColor(b_mask, cv.COLOR_GRAY2BGR)
-                isolated = cv.bitwise_and(mask3ch, img)
+                white_inside_crop = np.ones_like(img) * 255
+                isolated = cv.bitwise_and(mask3ch, white_inside_crop)
+                #isolated = cv.bitwise_and(mask3ch, img)
                 processed_img = process_image(isolated)
                 skel = generate_skeleton(processed_img["contour_strings"], frame.shape[1], frame.shape[0], generation_settings['smoothing_factor'], generation_settings['downsample'])
                 overlayed = overlay_images(background, skel)
@@ -69,6 +88,37 @@ def process_frame(frame_index, frame, model, generation_settings):
                     frame_results.append(overlayed)
         else:
             frame_results.append(frame)
+
+    return (frame_index, frame_results)
+
+def process_frame_single_detection(frame_index, frame, model, generation_settings):
+    
+    results = model.predict(frame, conf=generation_settings['confidence_level'], save=False, show=False, verbose=False)
+
+    background = frame
+    frame_results = []
+
+    best_result = filter_most_confident(results)
+
+    if best_result is not None:
+        img = np.copy(best_result.orig_img)
+
+        for ci, c in enumerate(best_result):
+            b_mask = np.zeros(img.shape[:2], np.uint8)
+            contour = c.masks.xy.pop()
+            contour = contour.astype(np.int32)
+            contour = contour.reshape(-1, 1, 2)
+            _ = cv.drawContours(b_mask, [contour], -1, (255, 255, 255), cv.FILLED)
+            mask3ch = cv.cvtColor(b_mask, cv.COLOR_GRAY2BGR)
+            isolated = cv.bitwise_and(mask3ch, img)
+            processed_img = process_image(isolated)
+            skel = generate_skeleton(processed_img["contour_strings"], frame.shape[1], frame.shape[0], generation_settings['smoothing_factor'], generation_settings['downsample'])
+            overlayed = overlay_images(background, skel)
+
+            if overlayed.shape[2] == 4:
+                overlayed = cv.cvtColor(overlayed, cv.COLOR_BGRA2BGR)
+    
+            frame_results.append(overlayed)
 
     return (frame_index, frame_results)
 
@@ -148,6 +198,45 @@ def skeletonize_video(input_path, output_path, file_name, generation_settings):
     cv.destroyAllWindows()
 
 def skeletonize_img(input_path, output_path, file_name, generation_settings):
+
+    original_img = cv.imread(input_path)
+
+    model = YOLO(model_path)
+
+    results = model.predict(original_img, conf=generation_settings['confidence_level'], save=False, show=False, verbose=False)
+
+    background = original_img
+
+    for result in results:
+        if result is not None:
+            img = np.copy(result.orig_img)
+
+            for ci, c in enumerate(result):
+                b_mask = np.zeros(img.shape[:2], np.uint8)
+                contour = c.masks.xy.pop()
+                contour = contour.astype(np.int32)
+                contour = contour.reshape(-1, 1, 2)
+                _ = cv.drawContours(b_mask, [contour], -1, (255, 255, 255), cv.FILLED)
+                mask3ch = cv.cvtColor(b_mask, cv.COLOR_GRAY2BGR)
+                white_inside_crop = np.ones_like(img) * 255
+                isolated = cv.bitwise_and(mask3ch, white_inside_crop)
+                #isolated = cv.bitwise_and(mask3ch, img)
+                processed_img = process_image(isolated)
+                skel = generate_skeleton(processed_img["contour_strings"], original_img.shape[1], original_img.shape[0], generation_settings['smoothing_factor'], generation_settings['downsample'])
+                overlayed = overlay_images(background, skel)
+
+                if overlayed.shape[2] == 4:
+                    overlayed = cv.cvtColor(overlayed, cv.COLOR_BGRA2BGR)
+
+                if ci != (len(results[0].boxes) - 1):
+                    background = overlayed
+                else:
+                    cv.imwrite((f"{output_path}\\{file_name}"), overlayed)
+        else:
+            cv.imwrite((f"{output_path}\\{file_name}"), overlayed)
+
+
+def skeletonize_img_single_detection(input_path, output_path, file_name, generation_settings):
 
     original_img = cv.imread(input_path)
 

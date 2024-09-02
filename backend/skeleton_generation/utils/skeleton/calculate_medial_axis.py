@@ -29,8 +29,7 @@ def calculate_medial_axis(z):
     m = m[inside]
     r = r[inside]
 
+    
+
     medial_data = np.column_stack((m, r, triin))
     return z, medial_data
-
-
-print("#0 runs")
