@@ -6,7 +6,6 @@ import axios from 'axios'
 const Generate = () => {
 
     const [downloadReady, setDownloadReady] = useState(false);
-    const [uploadFinished, setUploadFinished] = useState(false);
     const [viewURL, setViewURL] = useState(null);
     const [file, setFile] = useState(null);
     const [fileURL, setFileURL] = useState('#');
@@ -15,6 +14,7 @@ const Generate = () => {
     const [isImage, setIsImage] = useState(null);
     const [isVideo, setIsVideo] = useState(null);
     const [prompt, setPrompt] = useState(null);
+    const [dataURL, setDataURL] = useState(null);
     const [generationSettings, setGenerationSettings] = useState({
         confidence_level: 0.5,
         smoothing_factor: 7,
@@ -46,7 +46,6 @@ const Generate = () => {
 
     const handlePromptChange = (event) => {
         setPrompt(event.target.value);
-        setUploadFinished(true);
     }
 
     const handleFileChange = (event) => {
@@ -66,9 +65,6 @@ const Generate = () => {
             
             setGenerateDisabled(false);
             setFile(file);
-
-            setUploadFinished(true);
-
         }
     }
 
@@ -99,6 +95,7 @@ const Generate = () => {
             
                 console.log(response.data.msg);
                 setFileURL(`http://127.0.0.1:5000/api/download/${response.data.id}`);
+                setDataURL(`http://127.0.0.1:5000/api/download_data/${response.data.id}`)
                 setDownloadReady(true);
                 
                 const viewUrl = `http://127.0.0.1:5000/api/view/${response.data.id}`;
@@ -142,6 +139,7 @@ const Generate = () => {
             
                 console.log(response.data.msg);
                 setFileURL(`http://127.0.0.1:5000/api/download/${response.data.id}`);
+                setDataURL(`http://127.0.0.1:5000/api/download_data/${response.data.id}`)
                 setDownloadReady(true);
                 
                 const viewUrl = `http://127.0.0.1:5000/api/view/${response.data.id}`;
@@ -211,21 +209,35 @@ const Generate = () => {
         </div>
         {downloadReady && isVideo && (
             <div className='flex flex-col justify-center items-center w-full h-full pt-10'>
-                <a href={fileURL} className='inline-flex items-center justify-center px-3 h-12 mx-12 bg-black border border-white
-                                             hover:bg-white hover:text-black rounded-2xl text-2xl shadow-md transition-all 
-                                             duration-700 font-light'>Download Skeleton</a>
+                <div className='flex flex-row justify-center items-center w-full h-full'>
+                    <a href={fileURL} className='inline-flex items-center justify-center px-3 h-12 mx-12 bg-black border border-white
+                                                hover:bg-white hover:text-black rounded-2xl text-2xl shadow-md transition-all 
+                                                duration-700 font-light'>Download Skeleton</a>
+                    <a href={dataURL} className='inline-flex items-center justify-center px-3 h-12 mx-12 bg-black border border-white
+                                                        hover:bg-white hover:text-black rounded-2xl text-2xl shadow-md transition-all 
+                                                        duration-700 font-light'>
+                            Download Point Data
+                    </a>
+                </div>
                 <video autoPlay loop ref={videoRef} className='mt-10 w-1/2 h-auto rounded-md border-4 border-green-400 object-cover'>
                     <source src={viewURL} type='video/mp4'/>
                 </video>                
             </div>
-            )}
+        )}
         {downloadReady && isImage && (
             <div className='flex flex-col justify-center items-center w-full h-full pt-10'>
-            <a href={fileURL} className='inline-flex items-center justify-center px-3 h-12 mx-12 bg-black border border-white
-                                            hover:bg-white hover:text-black rounded-2xl text-2xl shadow-md transition-all 
-                                            duration-700 font-light'>Download Skeleton</a>
-            <img src={viewURL} className='mt-10 w-1/2 h-auto rounded-md border-4 border-green-400 object-cover'/>
-        </div>
+                <div className='flex flex-row justify-center items-center w-full h-full'>
+                    <a href={fileURL} className='inline-flex items-center justify-center px-3 h-12 mx-12 bg-black border border-white
+                                                    hover:bg-white hover:text-black rounded-2xl text-2xl shadow-md transition-all 
+                                                    duration-700 font-light'>Download Skeleton</a>
+                    <a href={dataURL} className='inline-flex items-center justify-center px-3 h-12 mx-12 bg-black border border-white
+                                                    hover:bg-white hover:text-black rounded-2xl text-2xl shadow-md transition-all 
+                                                    duration-700 font-light'>
+                        Download Point Data
+                    </a>
+                </div>
+                <img src={viewURL} className='mt-10 w-1/2 h-auto rounded-md border-4 border-green-400 object-cover'/>   
+            </div>
         )}
     </>
   )

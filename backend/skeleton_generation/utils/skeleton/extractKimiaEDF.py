@@ -1,6 +1,6 @@
-import base64
 from io import BytesIO
 import cv2 as cv
+import torch
 
 import matplotlib
 import numpy as np
@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from skeleton_generation.utils.skeleton.BlumMedialAxis import BlumMedialAxis
 
 
-def generate_skeleton(contour_strings, target_width, target_height, smooth_sigma, down_factor):
+def generate_skeleton(contour_strings, target_width, target_height, smooth_sigma, down_factor, points_data):
 
     # Convert contour_strings into numpy array
     rough = np.array([list(map(float, s.split())) for s in contour_strings])
@@ -19,7 +19,7 @@ def generate_skeleton(contour_strings, target_width, target_height, smooth_sigma
     boundary = rough[:, 0] + 1j * rough[:, 1]
     bma = BlumMedialAxis(boundary, smooth_sigma, down_factor)
 
-    fig = bma.plot_with_edges()
+    fig = bma.plot_with_edges(points_data)
 
     plt.axis('equal')
     plt.axis('off')

@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt  # ZG
 import numpy as np
+import torch
 
 from skeleton_generation.utils.skeleton.branchesforbma import calculate_branches_for_bma
 from skeleton_generation.utils.skeleton.calculate_medial_axis import calculate_medial_axis
@@ -160,7 +161,7 @@ class BlumMedialAxis:
     def branches_for_bma(self):
         return calculate_branches_for_bma(self)
 
-    def plot_with_edges(self):
+    def plot_with_edges(self, points_data):
         figure1 = plt.figure()
 
         closed_boundary = np.concatenate((self.boundary, [self.boundary[0]]))
@@ -176,14 +177,22 @@ class BlumMedialAxis:
 
         # Filter points inside the boundary
         inside_points = []
+        data_points = []
         for point in self.pointsArray:
             pt = Point(np.real(point), np.imag(point))
             if boundary_polygon.contains(pt):
                 inside_points.append(point)
+                data_points.append([np.real(point), np.imag(point)])
+
+        # Convert data_points to a tensor and append to points_data
+        if data_points:  # Check if data_points is not empty
+            points_tensor = torch.tensor(data_points, dtype=torch.float)
+            points_data.append(points_tensor)
+ 
 
 
         # Plot self.pointsArray, separating real and imaginary parts
-        plt.plot(np.real(inside_points), np.imag(inside_points), 'o', color='lightgreen', markersize=4)  # Light green dots
+        plt.plot(np.real(inside_points), np.imag(inside_points), 'o', color='lightgreen', markersize=2)  # Light green dots
 
 
         #with open('points.txt', 'w') as file:

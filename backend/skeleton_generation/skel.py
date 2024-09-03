@@ -2,9 +2,9 @@ import cv2 as cv
 from ultralytics import YOLO
 import numpy as np
 import time
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Manager
 import os
-
+import torch
 
 from skeleton_generation.utils.skeleton.extractKimiaEDF import generate_skeleton
 from skeleton_generation.utils.processing_utils.create_overlay import overlay_images
@@ -50,7 +50,7 @@ def frame_reader(input_path, frame_queue, num_workers):
 
     
 
-def process_frame(frame_index, frame, model, generation_settings):
+def process_frame(frame_index, frame, model, generation_settings, points_data):
     
     results = model.predict(frame, conf=generation_settings['confidence_level'], save=False, show=False, verbose=False)
 
@@ -76,7 +76,7 @@ def process_frame(frame_index, frame, model, generation_settings):
                 isolated = cv.bitwise_and(mask3ch, white_inside_crop)
                 #isolated = cv.bitwise_and(mask3ch, img)
                 processed_img = process_image(isolated)
-                skel = generate_skeleton(processed_img["contour_strings"], frame.shape[1], frame.shape[0], generation_settings['smoothing_factor'], generation_settings['downsample'])
+                skel = generate_skeleton(processed_img["contour_strings"], frame.shape[1], frame.shape[0], generation_settings['smoothing_factor'], generation_settings['downsample'], points_data)
                 overlayed = overlay_images(background, skel)
 
                 if overlayed.shape[2] == 4:
@@ -122,7 +122,7 @@ def process_frame_single_detection(frame_index, frame, model, generation_setting
 
     return (frame_index, frame_results)
 
-def worker(frame_queue, result_queue, model_path, generation_settings):
+def worker(frame_queue, result_queue, model_path, generation_settings, points_data):
     model = YOLO(model_path)  # Load the model within each worker
     while True:
         frame_data = frame_queue.get()
@@ -130,7 +130,7 @@ def worker(frame_queue, result_queue, model_path, generation_settings):
             result_queue.put(None)
             break
         frame_index, frame = frame_data
-        results = process_frame(frame_index, frame, model, generation_settings)
+        results = process_frame(frame_index, frame, model, generation_settings, points_data)
         result_queue.put(results)
 
 def video_writer(output_path, result_queue, frame_count, width, height, fps):
@@ -155,7 +155,7 @@ def video_writer(output_path, result_queue, frame_count, width, height, fps):
 
     video_writer.release()
 
-def skeletonize_video(input_path, output_path, file_name, generation_settings):
+def skeletonize_video(input_path, output_path, file_name, skeleton_data_name, generation_settings):
 
     model = model_path
 
@@ -173,13 +173,16 @@ def skeletonize_video(input_path, output_path, file_name, generation_settings):
 
     start_time = time.monotonic()
 
+    manager = Manager()
+    points_data = manager.list()
+
     num_workers = 9
     reader_process = Process(target=frame_reader, args=(input_path, frame_queue, num_workers))
     reader_process.start()
 
     workers = []
     for _ in range(num_workers):
-        worker_process = Process(target=worker, args=(frame_queue, result_queue, model, generation_settings))
+        worker_process = Process(target=worker, args=(frame_queue, result_queue, model, generation_settings, points_data))
         workers.append(worker_process)
         worker_process.start()
 
@@ -193,17 +196,23 @@ def skeletonize_video(input_path, output_path, file_name, generation_settings):
     result_queue.put(None)  # Send sentinel value to video_writer
     writer_process.join()
 
+    points_data = list(points_data)
+
+    torch.save(points_data, f"{output_path}\\{skeleton_data_name}")
 
     print(f"Finished in {time.monotonic() - start_time} seconds")
     cv.destroyAllWindows()
 
-def skeletonize_img(input_path, output_path, file_name, generation_settings):
+
+def skeletonize_img(input_path, output_path, file_name, skeleton_data_name, generation_settings):
 
     original_img = cv.imread(input_path)
 
     model = YOLO(model_path)
 
     results = model.predict(original_img, conf=generation_settings['confidence_level'], save=False, show=False, verbose=False)
+
+    points_data = []
 
     background = original_img
 
@@ -222,7 +231,7 @@ def skeletonize_img(input_path, output_path, file_name, generation_settings):
                 isolated = cv.bitwise_and(mask3ch, white_inside_crop)
                 #isolated = cv.bitwise_and(mask3ch, img)
                 processed_img = process_image(isolated)
-                skel = generate_skeleton(processed_img["contour_strings"], original_img.shape[1], original_img.shape[0], generation_settings['smoothing_factor'], generation_settings['downsample'])
+                skel = generate_skeleton(processed_img["contour_strings"], original_img.shape[1], original_img.shape[0], generation_settings['smoothing_factor'], generation_settings['downsample'], points_data)
                 overlayed = overlay_images(background, skel)
 
                 if overlayed.shape[2] == 4:
@@ -234,6 +243,8 @@ def skeletonize_img(input_path, output_path, file_name, generation_settings):
                     cv.imwrite((f"{output_path}\\{file_name}"), overlayed)
         else:
             cv.imwrite((f"{output_path}\\{file_name}"), overlayed)
+ 
+        torch.save(points_data, f"{output_path}\\{skeleton_data_name}")
 
 
 def skeletonize_img_single_detection(input_path, output_path, file_name, generation_settings):

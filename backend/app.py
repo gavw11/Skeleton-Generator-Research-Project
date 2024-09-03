@@ -59,12 +59,15 @@ def upload():
 
         if ext.lower() in image_extensions:
             skeleton_fil_name = f"{file_name}-skeleton.png"
-            skeletonize_img(input_path, app.config['RESULT_FOLDER'], skeleton_fil_name, generation_settings)
+            skeleton_data_name = f"{file_name}-data.pt"
+            skeletonize_img(input_path, app.config['RESULT_FOLDER'], skeleton_fil_name, skeleton_data_name, generation_settings)
         elif ext.lower() in video_extensions:
             skeleton_fil_name = f"{file_name}-skeleton.mp4"
-            skeletonize_video(input_path, app.config['RESULT_FOLDER'], skeleton_fil_name, generation_settings)
+            skeleton_data_name = f"{file_name}-data.pt"
+            skeletonize_video(input_path, app.config['RESULT_FOLDER'], skeleton_fil_name, skeleton_data_name, generation_settings)
 
-        file_dict[file_unique_id] = {"skeleton": skeleton_fil_name}
+        file_dict[file_unique_id] = {"skeleton": skeleton_fil_name, 
+                                     "point_data": skeleton_data_name}
 
         os.remove(input_path)
     
@@ -87,7 +90,8 @@ def openai_upload():
         
         file_name = file_unique_id
         skeleton_fil_name = f"{file_name}-skeleton.png"
-        skeletonize_img(input_path, app.config['RESULT_FOLDER'], skeleton_fil_name, generation_settings)
+        skeleton_data_name = f"{file_name}-data.pt"
+        skeletonize_img(input_path, app.config['RESULT_FOLDER'], skeleton_fil_name, skeleton_data_name, generation_settings)
 
         file_dict[file_unique_id] = {"skeleton": skeleton_fil_name}
         os.remove(input_path)
@@ -126,6 +130,24 @@ def download(unique_id):
     else:
         return jsonify({"msg": "ID Not Found!"}), 404
     
+@app.route('/api/download_data/<unique_id>', methods=["GET"])
+def download_data(unique_id):
+
+    print(f"Received unique_id: {unique_id}")
+
+    if unique_id in file_dict:
+        file_name = file_dict[unique_id]["point_data"]
+        file_path = os.path.join(app.config['RESULT_FOLDER'], file_name)
+
+        print(f"Looking for file: {file_path}")
+
+        if os.path.exists(file_path):
+            print("hi")
+            return send_from_directory(app.config['RESULT_FOLDER'], file_name, as_attachment=True, mimetype='video/mp4')
+        else:
+            return jsonify({"msg": "Video Not Found!"}), 404      
+    else:
+        return jsonify({"msg": "ID Not Found!"}), 404
     
 if __name__ == "__main__":
     app.run(debug=True)
