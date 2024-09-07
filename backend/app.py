@@ -27,7 +27,14 @@ file_dict = {}
 # Determine the base directory
 base_dir = os.path.dirname(os.path.abspath(__file__))
 # Set the result folder relative to the base directory
+
 app.config['RESULT_FOLDER'] = os.path.join(base_dir, 'output_path')
+
+if not os.path.exists(app.config['RESULT_FOLDER']):
+    os.makedirs('output_path')
+    app.config['RESULT_FOLDER'] = os.path.join(base_dir, 'output_path')
+
+    
 
 @app.route('/api/upload', methods=["POST"])
 def upload():
