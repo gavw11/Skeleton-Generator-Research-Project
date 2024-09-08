@@ -1,2 +1,0 @@
-filter=lfs diff=lfs merge=lfs -text
-frontend/src/assets/demo_vid4-skeleton.mp4 filter=lfs diff=lfs merge=lfs -text
