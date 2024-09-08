@@ -78,7 +78,7 @@ const Generate = () => {
             setIsVideo(false);
             setGenerateDisabled(true);
             setGenerating(true);
-            const url = 'http://127.0.0.1:5000/api/openai/upload';
+            const url = 'https://skelai.onrender.com/api/openai/upload';
             const data = {
                 prompt: prompt,
                 generationSettings: generationSettings,
@@ -94,11 +94,11 @@ const Generate = () => {
                 const response = await axios.post(url, data, config);
             
                 console.log(response.data.msg);
-                setFileURL(`http://127.0.0.1:5000/api/download/${response.data.id}`);
-                setDataURL(`http://127.0.0.1:5000/api/download_data/${response.data.id}`)
+                setFileURL(`https://skelai.onrender.com/api/download/${response.data.id}`);
+                setDataURL(`https://skelai.onrender.com/api/download_data/${response.data.id}`)
                 setDownloadReady(true);
                 
-                const viewUrl = `http://127.0.0.1:5000/api/view/${response.data.id}`;
+                const viewUrl = `https://skelai.onrender.com/api/view/${response.data.id}`;
                 setViewURL(viewUrl);
 
             }
@@ -122,7 +122,7 @@ const Generate = () => {
             setGenerateDisabled(true);
             setGenerating(true);
 
-            const url = 'http://127.0.0.1:5000/api/upload';
+            const url = 'https://skelai.onrender.com/api/upload';
             const formData = new FormData();
             formData.append('file', file);
             formData.append('fileName', file.name);
@@ -138,11 +138,11 @@ const Generate = () => {
                 const response = await axios.post(url, formData, config);
             
                 console.log(response.data.msg);
-                setFileURL(`http://127.0.0.1:5000/api/download/${response.data.id}`);
-                setDataURL(`http://127.0.0.1:5000/api/download_data/${response.data.id}`)
+                setFileURL(`https://skelai.onrender.com/download/${response.data.id}`);
+                setDataURL(`https://skelai.onrender.com/api/download_data/${response.data.id}`)
                 setDownloadReady(true);
                 
-                const viewUrl = `http://127.0.0.1:5000/api/view/${response.data.id}`;
+                const viewUrl = `https://skelai.onrender.com/api/view/${response.data.id}`;
                 setViewURL(viewUrl);
 
             }
